@@ -43,5 +43,9 @@
     "webpack-cli": "^3.1.1",
     "webpack-dev-server": "^3.1.8",
     "webpack-glsl-loader": "^1.0.1"
+  },
+  "dependencies": {
+    "p5": "^0.7.2",
+    "victor": "^1.1.0"
   }
 }
