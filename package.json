@@ -45,7 +45,11 @@
     "webpack-glsl-loader": "^1.0.1"
   },
   "dependencies": {
-    "p5": "^0.7.2",
+    "canvas-sketch": "^0.0.27",
+    "glslify-loader": "^1.0.2",
+    "primitive-quad": "^2.0.0",
+    "raw-loader": "^0.5.1",
+    "regl": "^1.3.9",
     "victor": "^1.1.0"
   }
 }

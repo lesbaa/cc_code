@@ -28,6 +28,8 @@ module.exports = {
   },
   module: {
     rules: [
+      { test: /\.(glsl|frag|vert)$/, use: { loader: 'raw-loader' }, exclude: /node_modules/ },
+      { test: /\.(glsl|frag|vert)$/, use: { loader: 'glslify-loader' }, exclude: /node_modules/ },
       {
         test: /\.js$/,
         exclude: /(node_modules|bower_components)/,
