@@ -1,29 +1,25 @@
 precision mediump float;
 
-uniform vec3 uLighting;
-uniform vec4 uAmbient;
-uniform float uMouseX;
-uniform float uMouseY;
-uniform float uWidth;
+uniform vec4 uMouse;
+uniform vec2 uRes;
 uniform float uTime;
 
+float plot(vec2 st, float pct) {
+  return
+    smoothstep( pct - 0.01, pct, st.y ) - 
+    smoothstep( pct, pct + 0.01, st.y );
+
+}
+
 void main() {
+  vec2 st = gl_FragCoord.xy / uRes;
 
-  float x = gl_PointCoord.x * 2.0 - 1.0;
-  float y = gl_PointCoord.y * 2.0 - 1.0;
+  float y = (sin(st.x * 5.0 + uTime) + 1.0) / 2.0;
 
-  float z = sqrt(1.0 - (pow(x, 2.0) + pow(y, 2.0)));
+  vec3 color = vec3(0.0);
 
-  vec3 position = vec3(x, y, z);
+  float pct = plot(st, y);
+  color = (1.0 - pct) * color + pct * vec3(0.0,1.0,0.0);
 
-  float mag = dot(position.xy, position.xy);
-  if(mag > 1.0) discard;
-
-  vec3 normal = normalize(position);
-
-  vec3 normal_col = normal * 0.5 + 0.5;
-  vec3 lightPos = normalize(uLighting);
-
-  float diffuse = dot(lightPos, normal);
-  gl_FragColor = diffuse * vec4(0.5, 0.4, 0.9, 1.0);
+  gl_FragColor = vec4(color, 1.0);
 }

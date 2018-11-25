@@ -3,12 +3,8 @@ import frag from './frag.glsl'
 
 const uniforms = regl => ({
   uTime: regl.prop('uTime'),
-  uLighting: regl.prop('uLighting'),
-  uAmbient: regl.prop('uAmbient'),
-  uMouseX: regl.prop('uMouseX'),
-  uMouseY: regl.prop('uMouseY'),
-  uWidth: regl.prop('uWidth'),
-  uHeight: regl.prop('uHeight'),
+  uMouse: regl.prop('uMouse'),
+  uRes: regl.prop('uRes'),
   uAspect: regl.prop('uAspect'),
 })
 

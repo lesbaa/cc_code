@@ -3,12 +3,18 @@ import createRegl from 'regl'
 import createQuad from 'primitive-quad'
 import { frag, vert, uniforms } from './shaders/one'
 
+const canvas = document.querySelector('#c')
+
 const sketchSettings = {
   pixelsPerInch: 300,
   animate: true,
-  scaleToView: true,
+  scaleToView: false,
+  dimensions: [
+    window.innerHeight,
+    window.innerHeight,
+  ],
   context: 'webgl',
-  canvas: document.querySelector('#c'),
+  canvas,
 }
 
 const sketch = ({
@@ -28,27 +34,27 @@ const sketch = ({
   const quad = createQuad()
   console.log(quad)
 
-  const position = [
-    [ 0, 0, 0 ],
-    // [ -1, 1, 0 ],
-    // [ -1, -1, 0 ],
-    // [ 1, 1, 0 ],
-  ]
+  // const position = [
+  //   [ 0, 0, 0 ],
+  //   // [ -1, 1, 0 ],
+  //   // [ -1, -1, 0 ],
+  //   // [ 1, 1, 0 ],
+  // ]
 
-  const cells = [
-    [ 0 ],
-    // [ 2, 3, 0 ],
-  ]
+  // const cells = [
+  //   [ 0 ],
+  //   // [ 2, 3, 0 ],
+  // ]
 
   const drawQuad = regl({
     frag,
     vert,
     uniforms: uniforms(regl),
     attributes: {
-      position,
+      position: quad.positions,
     },
-    elements: cells,
-    primitive: 'points',
+    elements: quad.cells,
+    primitive: 'triangles',
     blend: {
       enable: true,
       func: {
@@ -60,13 +66,21 @@ const sketch = ({
     },
   })
 
-  let uMouseX = 0
-  let uMouseY = 0
+  let mouseX = 0
+  let mouseY = 0
+  let mouseClickX = 0
+  let mouseClickY = 0
 
   window.addEventListener('mousemove', ({ clientX, clientY }) => {
     console.log('moving...')
-    uMouseX = clientX
-    uMouseY = clientY
+    mouseX = clientX
+    mouseY = clientY
+  })
+
+  canvas.addEventListener('click', ({ clientX, clientY }) => {
+    console.log('click...')
+    mouseClickX = clientX
+    mouseClickY = clientY
   })
 
   return {
@@ -81,12 +95,8 @@ const sketch = ({
 
       drawQuad({
         uTime: time,
-        uMouseX,
-        uMouseY,
-        uLighting: [width / uMouseX - 2.0, (width / uMouseY) / -20.0, 0.5],
-        uAmbient: [0.1, 0.1, 0.6, 1.0],
-        uWidth: width,
-        uHeight: height,
+        uMouse: [mouseX, mouseY, mouseClickX, mouseClickY],
+        uRes: [width, height],
         uAspect: width / height,
       })
       gl.flush()
