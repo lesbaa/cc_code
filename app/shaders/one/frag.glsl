@@ -2,24 +2,34 @@ precision mediump float;
 
 uniform vec4 uMouse;
 uniform vec2 uRes;
+uniform float uMag;
 uniform float uTime;
 
-float plot(vec2 st, float pct) {
-  return
-    smoothstep( pct - 0.01, pct, st.y ) - 
-    smoothstep( pct, pct + 0.01, st.y );
+vec3 mandelIter(float x, float y, float alpha) {
+  float r = x;
+  float i = y;
+  for (int a = 0; a < 100; a++) {
+    float tmpr = r * r - i * i + x;
+    float tmpi = 2.0 * r * i + y;
 
+    r = tmpr;
+    i = tmpi;
+    if (r * i > 4.0) {
+      return vec3(float(a / 100), 0.0, 0.0);
+    }
+  }
+
+  return vec3(1.0, r, i);
 }
 
 void main() {
   vec2 st = gl_FragCoord.xy / uRes;
+  vec2 stMouse = uMouse.xy / uRes;
+  vec3 mandelbrotVal = mandelIter(
+    st.x / uMag + stMouse.x,
+    st.y / uMag - stMouse.y,
+    uTime
+  );
 
-  float y = (sin(st.x * 5.0 + uTime) + 1.0) / 2.0;
-
-  vec3 color = vec3(0.0);
-
-  float pct = plot(st, y);
-  color = (1.0 - pct) * color + pct * vec3(0.0,1.0,0.0);
-
-  gl_FragColor = vec4(color, 1.0);
+  gl_FragColor = vec4(mandelbrotVal.xyz, 1.0);
 }

@@ -70,11 +70,29 @@ const sketch = ({
   let mouseY = 0
   let mouseClickX = 0
   let mouseClickY = 0
+  let mag = 1
 
-  window.addEventListener('mousemove', ({ clientX, clientY }) => {
+  const requestPointerLock = () => canvas.requestPointerLock()
+  canvas.addEventListener('click', () => {
+    requestPointerLock()
+    canvas.removeEventListener('click', requestPointerLock)
+  })
+
+  window.addEventListener('mousemove', ({ movementX, movementY }) => {
     console.log('moving...')
-    mouseX = clientX
-    mouseY = clientY
+    mouseX += movementX
+    mouseY += movementY
+  })
+
+  window.addEventListener('keydown', ({ key }) => {
+    if (key === 'ArrowUp') {
+      mag *= 1.05
+      console.log(mag)
+    }
+    if (key === 'ArrowDown') {
+      mag /= 1.05
+      console.log(mag)
+    }
   })
 
   canvas.addEventListener('click', ({ clientX, clientY }) => {
@@ -97,6 +115,7 @@ const sketch = ({
         uTime: time,
         uMouse: [mouseX, mouseY, mouseClickX, mouseClickY],
         uRes: [width, height],
+        uMag: mag,
         uAspect: width / height,
       })
       gl.flush()

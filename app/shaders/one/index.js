@@ -5,6 +5,7 @@ const uniforms = regl => ({
   uTime: regl.prop('uTime'),
   uMouse: regl.prop('uMouse'),
   uRes: regl.prop('uRes'),
+  uMag: regl.prop('uMag'),
   uAspect: regl.prop('uAspect'),
 })
 
