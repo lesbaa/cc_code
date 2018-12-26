@@ -6,6 +6,7 @@ const uniforms = regl => ({
   uMouse: regl.prop('uMouse'),
   uRes: regl.prop('uRes'),
   uAspect: regl.prop('uAspect'),
+  uSampler: regl.prop('uSampler'),
 })
 
 export {
