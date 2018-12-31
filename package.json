@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --mode production",
+    "build": "webpack --config webpack.prod.js",
     "todo": "grep -r --'*.lock' --exclude='*.json' --exclude='README.md' --exclude-dir={.git,node_modules,build, dist} TODO .",
-    "dev": "webpack-dev-server --mode development"
+    "dev": "webpack-dev-server --open --config webpack.dev.js"
   },
   "author": "",
   "license": "ISC",
@@ -42,7 +42,8 @@
     "webpack": "^4.19.1",
     "webpack-cli": "^3.1.1",
     "webpack-dev-server": "^3.1.8",
-    "webpack-glsl-loader": "^1.0.1"
+    "webpack-glsl-loader": "^1.0.1",
+    "webpack-merge": "^4.1.5"
   },
   "dependencies": {
     "angle-normals": "^1.0.0",
