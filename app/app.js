@@ -1,9 +1,23 @@
 import sketcher from 'canvas-sketch'
+import mat4 from 'gl-mat4'
+import vec3 from 'gl-vec3'
+
 import createRegl from 'regl'
-import createQuad from 'primitive-quad'
-import { frag, vert, uniforms } from './shaders/one'
+import Primitives from 'primitive-geometry'
+import createCamera from 'canvas-orbit-camera'
+import { frag, vert, uniforms } from './shaders/sphere'
 
 const canvas = document.querySelector('#c')
+const camera = createCamera(
+  canvas,
+  {
+    rotate: false,
+    scale: false,
+    pan: false,
+  }
+)
+
+const sphere = Primitives.sphere(15)
 
 const sketchSettings = {
   pixelsPerInch: 300,
@@ -17,13 +31,9 @@ const sketchSettings = {
   canvas,
 }
 
-const sketch = ({
+const sketch = async ({
   gl,
-  update,
-  render,
-  pause,
 }) => {
-
   const regl = createRegl({
     gl,
     extensions: [
@@ -31,39 +41,36 @@ const sketch = ({
     ],
   })
 
-  const quad = createQuad()
-  console.log(quad)
+  const rotationDir = vec3.create()
+  vec3.set(rotationDir, 1, 1, 1)
+  
+  const moveToOrigin = vec3.create()
+  vec3.set(moveToOrigin, -1, -1, -1)
 
-  // const position = [
-  //   [ 0, 0, 0 ],
-  //   // [ -1, 1, 0 ],
-  //   // [ -1, -1, 0 ],
-  //   // [ 1, 1, 0 ],
-  // ]
-
-  // const cells = [
-  //   [ 0 ],
-  //   // [ 2, 3, 0 ],
-  // ]
-
-  const drawQuad = regl({
+  const drawSphere = regl({
     frag,
     vert,
-    uniforms: uniforms(regl),
+    uniforms: {
+      ...uniforms(regl),
+      uProjection: ({
+        viewportWidth,
+        viewportHeight,
+      }) => mat4.perspective(
+        [],
+        Math.PI / 2,
+        viewportWidth / viewportHeight,
+        0.01,
+        1000,
+      ),
+      uModel: () => mat4.identity([]),
+      uRotation: regl.prop('uRotation'),
+      uView: () => camera.view(),
+    },
     attributes: {
-      position: quad.positions,
+      aPosition: sphere.positions,
+      aNormal: sphere.normals,
     },
-    elements: quad.cells,
-    primitive: 'triangles',
-    blend: {
-      enable: true,
-      func: {
-        srcRGB: 'src alpha',
-        srcAlpha: 1,
-        dstRGB: 'one minus src alpha',
-        dstAlpha: 1,
-      },
-    },
+    elements: sphere.cells,
   })
 
   let mouseX = 0
@@ -72,36 +79,61 @@ const sketch = ({
   let mouseClickY = 0
 
   window.addEventListener('mousemove', ({ clientX, clientY }) => {
-    console.log('moving...')
     mouseX = clientX
     mouseY = clientY
   })
 
   canvas.addEventListener('click', ({ clientX, clientY }) => {
-    console.log('click...')
     mouseClickX = clientX
     mouseClickY = clientY
   })
 
   return {
-    render({ context, time, width, height }) {
-
+    render({
+      // context,
+      time: uTime,
+      width,
+      height,
+    }) {
       regl.poll()
+
       regl.clear({
-        color: [0, 0, 0, 0],
+        color: [0.0, 0.0, 0.0, 0.0],
         depth: 1,
-        stencil: 0,
       })
 
-      drawQuad({
-        uTime: time,
-        uMouse: [mouseX, mouseY, mouseClickX, mouseClickY],
-        uRes: [width, height],
-        uAspect: width / height,
+      camera.tick()
+
+      const rotation = 0
+
+      const uRotation = [
+        Math.cos(rotation), -Math.sin(rotation), 0, 0,
+        Math.sin(rotation), Math.cos(rotation), 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1,
+      ]
+
+      const uMouse = [
+        mouseX,
+        mouseY,
+        mouseClickX,
+        mouseClickY,
+      ]
+
+      const uRes = [
+        width,
+        height,
+      ]
+
+      drawSphere({
+        uRes,
+        uTime,
+        uRotation,
+        uMouse,
       })
-      gl.flush()
     },
   }
 }
 
 sketcher(sketch, sketchSettings)
+
