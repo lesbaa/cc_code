@@ -1,139 +1,106 @@
 import sketcher from 'canvas-sketch'
-import mat4 from 'gl-mat4'
-import vec3 from 'gl-vec3'
-
-import createRegl from 'regl'
-import Primitives from 'primitive-geometry'
-import createCamera from 'canvas-orbit-camera'
-import { frag, vert, uniforms } from './shaders/sphere'
+import drawBrackets from './lib/drawBrackets'
+import createGlobalState from './lib/createGlobalState'
+import Time from './lib/Time'
 
 const canvas = document.querySelector('#c')
-const camera = createCamera(
-  canvas,
-  {
-    rotate: false,
-    scale: false,
-    pan: false,
-  }
-)
 
-const sphere = Primitives.sphere(15)
+const displayZoomElement = document.getElementById('displayZoom')
+
+const MAX_TIMES = 100
 
 const sketchSettings = {
   pixelsPerInch: 300,
   animate: true,
-  scaleToView: false,
-  dimensions: [
-    window.innerHeight,
-    window.innerHeight,
-  ],
-  context: 'webgl',
+  scaleToView: true,
+  context: '2d',
   canvas,
 }
 
 const sketch = async ({
-  gl,
+  context,
+  width,
+  height,
 }) => {
-  const regl = createRegl({
-    gl,
-    extensions: [
-      'OES_standard_derivatives',
-    ],
+
+  const {
+    globalState,
+    updateGlobalState,
+  } = createGlobalState({
+    width,
+    height,
   })
 
-  const rotationDir = vec3.create()
-  vec3.set(rotationDir, 1, 1, 1)
-  
-  const moveToOrigin = vec3.create()
-  vec3.set(moveToOrigin, -1, -1, -1)
+  const times = new Array(MAX_TIMES)
+    .fill({})
+    .map((el, i) => new Time({
+      ctx: context,
+      globalState,
+      datetime: new Date(~~(Date.now() / 1000) * 1000 + (i - MAX_TIMES / 2) * 1000),
+    }))
 
-  const drawSphere = regl({
-    frag,
-    vert,
-    uniforms: {
-      ...uniforms(regl),
-      uProjection: ({
-        viewportWidth,
-        viewportHeight,
-      }) => mat4.perspective(
-        [],
-        Math.PI / 2,
-        viewportWidth / viewportHeight,
-        0.01,
-        1000,
-      ),
-      uModel: () => mat4.identity([]),
-      uRotation: regl.prop('uRotation'),
-      uView: () => camera.view(),
-    },
-    attributes: {
-      aPosition: sphere.positions,
-      aNormal: sphere.normals,
-    },
-    elements: sphere.cells,
+  globalState.times = times
+
+  // let mouseX = 0
+  // let mouseY = 0
+  // let mouseClickX = 0
+  // let mouseClickY = 0
+
+  // window.addEventListener('mousemove', ({ clientX, clientY }) => {
+  //   mouseX = clientX
+  //   mouseY = clientY
+  // })
+
+  // canvas.addEventListener('click', ({ clientX, clientY }) => {
+  //   mouseClickX = clientX
+  //   mouseClickY = clientY
+  // })
+
+  const updateStats = () => {
+    displayZoomElement.innerText = `${globalState.displayZoom}x`
+  }
+
+  updateStats()
+
+  document.getElementById('zoom-in').addEventListener('click', () => {
+    updateGlobalState({
+      zoomChange: 1,
+    })
+    updateStats()
   })
 
-  let mouseX = 0
-  let mouseY = 0
-  let mouseClickX = 0
-  let mouseClickY = 0
-
-  window.addEventListener('mousemove', ({ clientX, clientY }) => {
-    mouseX = clientX
-    mouseY = clientY
+  document.getElementById('zoom-out').addEventListener('click', () => {
+    updateGlobalState({
+      zoomChange: -1,
+    })
+    updateStats()
   })
 
-  canvas.addEventListener('click', ({ clientX, clientY }) => {
-    mouseClickX = clientX
-    mouseClickY = clientY
-  })
+  return ({
+    context: ctx,
+    width,
+    height,
+  }) => {
+    
+    ctx.font = '1em sans-serif'
+    updateGlobalState()
 
-  return {
-    render({
-      // context,
-      time: uTime,
-      width,
-      height,
-    }) {
-      regl.poll()
+    ctx.clearRect(0, 0, width, height)
 
-      regl.clear({
-        color: [0.0, 0.0, 0.0, 0.0],
-        depth: 1,
-      })
+    for (let i = 0; i < globalState.times.length; i++) {
+      const time = times[i]
+      time.update()
+    }
 
-      camera.tick()
+    drawBrackets({
+      ctx,
+      x: width / 2,
+      y: height / 2,
+    })
 
-      const rotation = 0
-
-      const uRotation = [
-        Math.cos(rotation), -Math.sin(rotation), 0, 0,
-        Math.sin(rotation), Math.cos(rotation), 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1,
-      ]
-
-      const uMouse = [
-        mouseX,
-        mouseY,
-        mouseClickX,
-        mouseClickY,
-      ]
-
-      const uRes = [
-        width,
-        height,
-      ]
-
-      drawSphere({
-        uRes,
-        uTime,
-        uRotation,
-        uMouse,
-      })
-    },
+    // for each frame check the times, remove old ones and add new ones, update all
+    // object pool
   }
 }
 
 sketcher(sketch, sketchSettings)
-
