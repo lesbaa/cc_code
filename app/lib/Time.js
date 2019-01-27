@@ -74,6 +74,11 @@ export default class Time {
     }
   }
 
+  setStyle = () => {
+    const isOnMinute = this.datetime.getSeconds() === 0
+    const isOnTenMinutes = this.datetime.getMinutes() % 10 === 0
+  }
+
   draw = () => {
     const {
       width,
@@ -83,7 +88,7 @@ export default class Time {
     this.ctx.translate(width / 2, height / 2)
     this.ctx.translate(this.pos.x * currentZoom, this.pos.y)
 
-    this.setFont()
+    this.setStyle()
     this.setTransparency()
     this.ctx.beginPath()
     this.ctx.moveTo(0, -25)
