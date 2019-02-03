@@ -1,23 +1,21 @@
 import sketcher from 'canvas-sketch'
-import mat4 from 'gl-mat4'
-import vec3 from 'gl-vec3'
-
-import createRegl from 'regl'
-import Primitives from 'primitive-geometry'
-import createCamera from 'canvas-orbit-camera'
+import {
+  OrthographicCamera,
+  Scene,
+  BoxGeometry,
+  AmbientLight,
+  PerspectiveCamera,
+  BoxBufferGeometry,
+  WebGLRenderer,
+  ShaderMaterial,
+  MeshBasicMaterial,
+  Mesh,
+  Vector3,
+} from 'three'
 import { frag, vert, uniforms } from './shaders/sphere'
+import createGrid from './utils/createGrid'
 
 const canvas = document.querySelector('#c')
-const camera = createCamera(
-  canvas,
-  {
-    rotate: false,
-    scale: false,
-    pan: false,
-  }
-)
-
-const sphere = Primitives.sphere(15)
 
 const sketchSettings = {
   pixelsPerInch: 300,
@@ -32,46 +30,59 @@ const sketchSettings = {
 }
 
 const sketch = async ({
-  gl,
+  context,
+  width,
+  height,
 }) => {
-  const regl = createRegl({
-    gl,
-    extensions: [
-      'OES_standard_derivatives',
-    ],
+  const renderer = new WebGLRenderer({
+    context,
   })
 
-  const rotationDir = vec3.create()
-  vec3.set(rotationDir, 1, 1, 1)
-  
-  const moveToOrigin = vec3.create()
-  vec3.set(moveToOrigin, -1, -1, -1)
+  renderer.setSize(width, height)
 
-  const drawSphere = regl({
-    frag,
-    vert,
-    uniforms: {
-      ...uniforms(regl),
-      uProjection: ({
-        viewportWidth,
-        viewportHeight,
-      }) => mat4.perspective(
-        [],
-        Math.PI / 2,
-        viewportWidth / viewportHeight,
-        0.01,
-        1000,
-      ),
-      uModel: () => mat4.identity([]),
-      uRotation: regl.prop('uRotation'),
-      uView: () => camera.view(),
-    },
-    attributes: {
-      aPosition: sphere.positions,
-      aNormal: sphere.normals,
-    },
-    elements: sphere.cells,
+  const scene = new Scene()
+
+  const cam = new OrthographicCamera(width / - 2, width / 2, height / 2, height / - 2, 0.001, 1000)
+  // const cam = PerspectiveCamera(45, 1, 0.01, 100)
+  scene.add(cam)
+
+  cam.position.z = 5
+  // cam.lookAt(new Vector3(0, 0, 0))
+
+  const material = new MeshBasicMaterial({
+    color: 0xff5500,
   })
+
+  // const cubes = createGrid()
+  //   .map(({
+  //     x,
+  //     y: z,
+  //     w,
+  //     h,
+  //   }) => {
+  //     const geom = new BoxGeometry(w, w, h)
+  //     console.log(x, z)
+  //     return {
+  //       geom,
+  //       x,
+  //       z,
+  //     }
+  //   })
+  //   .forEach(({
+  //     geom,
+  //     x,
+  //     z,
+  //   }) => {
+  //     const cube = new Mesh(geom, material)
+  //     cube.position.set(x, 0, z)
+  //     scene.add(cube)
+  //   })
+
+  const geom = new BoxGeometry(0.5,0.5,0.5)
+  const cube = new Mesh(geom, material)
+  cube.position.set(0,0,0)
+  scene.add(new AmbientLight('#59314f'))
+  scene.add(cube)
 
   let mouseX = 0
   let mouseY = 0
@@ -88,50 +99,8 @@ const sketch = async ({
     mouseClickY = clientY
   })
 
-  return {
-    render({
-      // context,
-      time: uTime,
-      width,
-      height,
-    }) {
-      regl.poll()
-
-      regl.clear({
-        color: [0.0, 0.0, 0.0, 0.0],
-        depth: 1,
-      })
-
-      camera.tick()
-
-      const rotation = 0
-
-      const uRotation = [
-        Math.cos(rotation), -Math.sin(rotation), 0, 0,
-        Math.sin(rotation), Math.cos(rotation), 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1,
-      ]
-
-      const uMouse = [
-        mouseX,
-        mouseY,
-        mouseClickX,
-        mouseClickY,
-      ]
-
-      const uRes = [
-        width,
-        height,
-      ]
-
-      drawSphere({
-        uRes,
-        uTime,
-        uRotation,
-        uMouse,
-      })
-    },
+  return () => {
+    renderer.render(scene, cam)
   }
 }
 
